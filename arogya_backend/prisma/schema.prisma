@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model PharmacyOwner {
+  id         Int        @id @default(autoincrement())
+  first_name String
+  last_name  String
+  Pharmacy   Pharmacy[]
+}
+
+model Pharmacy {
+  id        Int     @id @default(autoincrement())
+  name      String
+  ratings   Int     @default(0)
+  address   String
+
+  opensAt   String
+  closedAt   String
+
+  lat       Decimal
+  lng       Decimal
+  telephone String
+  Order     Order[]
+
+  pharmacyOwner   PharmacyOwner? @relation(fields: [pharmacyOwnerID], references: [id])
+  pharmacyOwnerID Int?
+}
+
+model Order {
+  id           Int      @id @default(autoincrement())
+  date_created DateTime
+  user         User?    @relation(fields: [userId], references: [id])
+  userId       Int?
+
+  pharmacy    Pharmacy?   @relation(fields: [pharmacyId], references: [id])
+  pharmacyId  Int?
+  orderStatus OrderStatus
+
+  messagesFromPharmacy String?
+  messagesFromUser     String?
+}
+
+model User {
+  id         Int    @id @default(autoincrement())
+  email      String @unique
+  first_name String
+  last_name  String
+  password   String
+
+  MedicineSchedule MedicineSchedule[]
+  Order            Order[]
+}
+
+// MedicineSchedule model
+model MedicineSchedule {
+  id Int @id @default(autoincrement())
+
+  visitId      Int
+  date_created DateTime
+  user         User?      @relation(fields: [userId], references: [id])
+  userId       Int?
+  Medicine     Medicine[]
+}
+
+// Medicine model
+model Medicine {
+  id              Int               @id @default(autoincrement())
+  before_meal     Boolean
+  afternoon       Boolean
+  morning         Boolean
+  night           Boolean
+  medicine_name   String
+  tablet_count    Int
+  imageURL        String?
+  expires         DateTime
+  schedule        MedicineSchedule? @relation(fields: [scheduleId], references: [id])
+  scheduleId      Int?
+  MedicineHistory MedicineHistory[]
+}
+
+// MedicineHistory model
+model MedicineHistory {
+  id         Int      @id @default(autoincrement())
+  medicine   Medicine @relation(fields: [medicineId], references: [id])
+  medicineId Int
+  date       DateTime
+}
+
+enum OrderStatus {
+  RECEIVED
+  PREPAIRING
+  ON_THE_WAY
+  NOT_AVAILABLE
+  DELAYED
+}
